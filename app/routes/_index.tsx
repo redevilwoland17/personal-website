@@ -21,9 +21,9 @@ export default function Index() {
         <img
           src="https://unpkg.com/lucide-static/icons/house.svg"
           alt="Home Icon"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 filter invert opacity-0"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 invert-0 dark:invert opacity-0"
         />
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">Hi, I'm Jonas.</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">Hi, I'm Jonas.</h1>
         <p className="text-neutral-400 text-lg mb-4">
           Mechanical Engineer (Imperial) turned Nanotech grad (Cambridge) exploring intelligence in machines.
           <br />
@@ -45,9 +45,9 @@ export default function Index() {
         <img
           src="https://unpkg.com/lucide-static/icons/user.svg"
           alt="User"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 filter invert"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 invert-0 dark:invert"
         />
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">About</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">About</h2>
         <p className="text-neutral-400">
           I started in mechanical engineering, took a detour into nanotech, and found myself drawn to intelligence —
           how we build it, and how machines can learn to move in the world.
@@ -67,9 +67,9 @@ export default function Index() {
         <img
           src="https://unpkg.com/lucide-static/icons/code.svg"
           alt="Code Icon"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 filter invert"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 invert-0 dark:invert"
         />
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">Projects</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">Projects</h2>
         <ul className="text-neutral-400 space-y-2">
           <li>
             <strong>K2 AI</strong> – Co-founded a startup focused on AI infrastructure and tooling.
@@ -96,9 +96,9 @@ export default function Index() {
         <img
           src="https://unpkg.com/lucide-static/icons/eye.svg"
           alt="Vision"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 filter invert"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 invert-0 dark:invert"
         />
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">Vision</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">Vision</h2>
         <p className="text-neutral-400">
           I'm excited about a future where machines learn the way animals do — through trial, error, and embodiment.
           <br /><br />
@@ -117,9 +117,9 @@ export default function Index() {
         <img
           src="https://unpkg.com/lucide-static/icons/mail.svg"
           alt="Mail Icon"
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 filter invert"
+          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mb-6 invert-0 dark:invert"
         />
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">Contact</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">Contact</h2>
         <p className="text-neutral-400">
           Feel free to reach out:
           <br />

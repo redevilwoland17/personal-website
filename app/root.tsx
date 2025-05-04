@@ -26,14 +26,19 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add("dark");`,
+          }}
+        />
          <Meta />  {/* This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!? */}
          <Links /> {/* This is where the links from the `links` function will be injected */}
       </head>
-      <body className="scroll-smooth bg-black text-white font-sans"> 
+      <body> 
         {children}
         <ScrollRestoration />
         <Scripts />
