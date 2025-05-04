@@ -8,6 +8,8 @@ import {
 import type { LinksFunction } from "@remix-run/node";
 
 import "./tailwind.css";
+import Navbar from "./components/navbar";
+
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -28,8 +30,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta /> // This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!?
-        <Links /> // This is where the links from the `links` function will be injected
+         <Meta />  {/* This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!? */}
+         <Links /> {/* This is where the links from the `links` function will be injected */}
       </head>
       <body>
         {children}
@@ -41,5 +43,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <Layout>
+        <Navbar />
+        <div className="flex flex-col items-center justify-center">
+          <Outlet />
+        </div>
+      </Layout>
+    </>
+  );
 }
