@@ -15,6 +15,11 @@ export default function Index() {
           <h1 className="leading text-2xl font-bold text-gray-800 dark:text-gray-100">
             Welcome to <span className="sr-only">Remix</span>
           </h1>
+
+          <h1 className="text-2xl font-bold text-blue-800 dark:text-gray-100">
+            Some more text, hola chica.
+          </h1>
+
           <div className="h-[144px] w-[434px]">
             <img
               src="/logo-light.png"

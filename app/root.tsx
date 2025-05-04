@@ -28,8 +28,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
+        <Meta /> // This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!?
+        <Links /> // This is where the links from the `links` function will be injected
       </head>
       <body>
         {children}
