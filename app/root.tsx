@@ -33,7 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
          <Meta />  {/* This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!? */}
          <Links /> {/* This is where the links from the `links` function will be injected */}
       </head>
-      <body>
+      <body className="scroll-smooth bg-black text-white font-sans"> 
         {children}
         <ScrollRestoration />
         <Scripts />
