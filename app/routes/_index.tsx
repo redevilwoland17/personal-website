@@ -121,7 +121,7 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-gray-800/90 backdrop-blur border-b border-gray-700">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
               <span className="text-white font-bold text-lg">JP</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function Home() {
             onClick={handleDownloadCV}
             variant="outline" 
             size="sm"
-            className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+            className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
           >
             <Download className="w-4 h-4 mr-2" />
             Download CV
@@ -141,14 +141,58 @@ export default function Home() {
       <main className="pt-24">
         {/* Hero Section */}
         <section className="max-w-4xl mx-auto px-6 py-16">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-transparent">
-              Hi, I'm Jonas
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Computational engineer with AI/robotics expertise. Co-founded and scaled AI startup to €500k revenue. 
-              Cambridge MPhil, Imperial MEng. Building the data pipelines for shipping true robotic intelligence.
-            </p>
+          <div className="grid md:grid-cols-12 gap-8 mb-8">
+            {/* Profile Photo */}
+            <div className="md:col-span-4 flex flex-col items-center md:items-start">
+              <div className="relative mb-6">
+                <div className="w-48 h-48 rounded-full p-0.5 bg-white">
+                  <img 
+                  src="/LinkedIn profile pic - shirt.png" 
+                  alt="Jonas Petersen" 
+                  className="w-full h-full rounded-full object-cover"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center space-x-6 md:mt-auto">
+                <a 
+                  href="https://github.com/7jep7" 
+                  className="flex items-center space-x-2 text-gray-400 hover:text-orange-500 transition-colors duration-200"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="w-5 h-5" />
+                  <span className="text-sm font-medium">GitHub</span>
+                </a>
+                <a 
+                  href="https://linkedin.com/in/jep7" 
+                  className="flex items-center space-x-2 text-gray-400 hover:text-orange-500 transition-colors duration-200"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Linkedin className="w-5 h-5" />
+                  <span className="text-sm font-medium">LinkedIn</span>
+                </a>
+              </div>
+            </div>
+            
+            {/* Text Content */}
+            <div className="md:col-span-8 text-center md:text-left flex flex-col">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight bg-gradient-to-r from-white via-orange-400 to-orange-600 bg-clip-text text-transparent">
+                Hi, I'm Jonas
+              </h1>
+                <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-8 md:mb-0">
+                  Computational engineer with AI and robotics expertise.
+                  Co-founder who scaled a startup to €500k revenue.
+                  Educated at Imperial College and Cambridge University.&nbsp;
+                  <span className="relative font-semibold">
+                    Building the data pipelines for shipping{" "}
+                    <span className="bg-orange-500 rounded px-1 font-bold" style={{ lineHeight: "1.5", paddingTop: "0.1em", paddingBottom: "0.1em" }}>
+                      true robotic intelligence
+                    </span>
+                    .
+                  </span>
+                </p>
+            </div>
           </div>
         </section>
 
@@ -210,7 +254,7 @@ export default function Home() {
                   variant="default"
                   size="sm"
                   onClick={() => window.open('https://github.com/7jep7/human2robot', '_blank')}
-                  className="bg-orange-500 hover:bg-orange-400 text-white"
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   <Github className="w-4 h-4 mr-2" />
                   GitHub
@@ -219,7 +263,7 @@ export default function Home() {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open('https://www.l5e.xyz', '_blank')}
-                  className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                  className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Website
@@ -245,7 +289,7 @@ export default function Home() {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open('https://www.linkedin.com/company/100340844', '_blank')}
-                  className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                  className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                 >
                   <Linkedin className="w-4 h-4 mr-2" />
                   LinkedIn
@@ -265,7 +309,7 @@ export default function Home() {
                         href="https://roboinnovate.mirmi.tum.de/roboinnovate-hackathon-2025/" 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-white underline hover:text-orange-300"
+                        className="text-white underline hover:text-orange-500"
                       >
                         2nd place with ExVo at Robo Innovate 2025
                       </a>
@@ -282,7 +326,7 @@ export default function Home() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open('https://github.com/7jep7/RL-Projects', '_blank')}
-                    className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                    className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
                     <Github className="w-4 h-4 mr-2" />
                     GitHub
@@ -308,7 +352,7 @@ export default function Home() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open('https://drive.google.com/file/d/1XPphLHcbn0c3HYzP-rjMFvPR8HTJrSiZ/view?usp=drive_link', '_blank')}
-                    className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                    className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Paper
@@ -333,7 +377,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                    className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
                     <Youtube className="w-4 h-4 mr-2" />
                     Demo
@@ -359,7 +403,7 @@ export default function Home() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open('https://www.youtube.com/watch?v=IPa6hRWRHTM', '_blank')}
-                    className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                    className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
                     <Youtube className="w-4 h-4 mr-2" />
                     Video
@@ -368,7 +412,7 @@ export default function Home() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open('https://www.kickstarter.com/projects/gordonkoehn/caelum-photos-from-stratosphere', '_blank')}
-                    className="border-gray-600 text-gray-300 hover:border-orange-400 hover:text-orange-400"
+                    className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Kickstarter
@@ -386,7 +430,7 @@ export default function Home() {
             <div className="flex justify-center space-x-6 mb-8">
               <a 
                 href="https://linkedin.com/in/jep7" 
-                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors duration-200"
+                className="flex items-center space-x-2 text-gray-300 hover:text-orange-500 transition-colors duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -395,7 +439,7 @@ export default function Home() {
               </a>
               <a 
                 href="https://github.com/7jep7" 
-                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors duration-200"
+                className="flex items-center space-x-2 text-gray-300 hover:text-orange-500 transition-colors duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -404,7 +448,7 @@ export default function Home() {
               </a>
               <a 
                 href="https://instagram.com/7jep7" 
-                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors duration-200"
+                className="flex items-center space-x-2 text-gray-300 hover:text-orange-500 transition-colors duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
