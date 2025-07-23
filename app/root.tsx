@@ -5,11 +5,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
 
 import "./tailwind.css";
-import Navbar from "./components/navbar";
-
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -24,21 +22,34 @@ export const links: LinksFunction = () => [
   },
 ];
 
+export const meta: MetaFunction = () => [
+  { title: "Jonas Petersen - Portfolio" },
+  { 
+    name: "description", 
+    content: "Computational engineer with AI/robotics expertise. Co-founded and scaled AI startup to €500k revenue. Cambridge MPhil, Imperial MEng. Building the future of human-robot interaction." 
+  },
+  { property: "og:title", content: "Jonas Petersen - Portfolio" },
+  { 
+    property: "og:description", 
+    content: "Computational engineer with AI/robotics expertise. Cambridge MPhil, Imperial MEng. Building the future of human-robot interaction." 
+  },
+  { property: "og:type", content: "website" },
+];
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.classList.add("dark");`,
-          }}
+        <Meta />
+        <Links />
+        <link 
+          rel="icon" 
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>JP</text></svg>" 
         />
-         <Meta />  {/* This is where the meta tags from the `meta` function will be injected. But there is no meta function currently, so it will be empty.?!? */}
-         <Links /> {/* This is where the links from the `links` function will be injected */}
       </head>
-      <body> 
+      <body className="min-h-screen bg-background text-foreground antialiased"> 
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -48,14 +59,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return (
-    <>
-      <Layout>
-        <Navbar />
-        <div className="flex flex-col items-center justify-center">
-          <Outlet />
-        </div>
-      </Layout>
-    </>
-  );
+  return <Outlet />;
 }
