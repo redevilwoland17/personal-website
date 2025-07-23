@@ -142,8 +142,8 @@ export default function Home() {
         {/* Hero Section */}
         <section className="max-w-4xl mx-auto px-6 py-16">
           <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-              Jonas Petersen
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-transparent">
+              Hi, I'm Jonas
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Computational engineer with AI/robotics expertise. Co-founded and scaled AI startup to €500k revenue. 
