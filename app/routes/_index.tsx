@@ -48,7 +48,7 @@ const projects: Project[] = [
   {
     title: "human2robot",
     description: "Coordination and data layer for the robotic age. Training data platform using imitation learning from human hand video recordings. Won 2 hackathons and secured YC interview.",
-    skills: ["Python", "ROS", "Isaac Gym", "Hugging Face", "Computer Vision"],
+    skills: ["Python", "ROS", "Isaac Lab", "SO-101 Manipulator", "Computer Vision"],
     featured: true,
     size: "large",
     buttons: [
@@ -66,9 +66,9 @@ const projects: Project[] = [
     ]
   },
   {
-    title: "RL Projects",
+    title: "Reinforcement Learning Projects",
     description: "Reinforcement learning implementations including Monte Carlo Tree Search for wildfire suppression and autonomous control systems.",
-    skills: ["PyTorch", "MCTS", "OpenAI Gym"],
+    skills: ["PyTorch", "Reinforcement Learning", "OpenAI Gym", "ROS", "Isaac Lab"],
     size: "small",
     buttons: [
       { label: "GitHub", icon: Github, href: "https://github.com/7jep7/RL-Projects", variant: "outline" as const }
@@ -121,8 +121,8 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-gray-800/90 backdrop-blur border-b border-gray-700">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              JP
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-400 to-orange-500 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">JP</span>
             </div>
           </div>
           <Button 
@@ -147,7 +147,7 @@ export default function Home() {
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Computational engineer with AI/robotics expertise. Co-founded and scaled AI startup to €500k revenue. 
-              Cambridge MPhil, Imperial MEng. Building the future of human-robot interaction.
+              Cambridge MPhil, Imperial MEng. Building the data pipelines for shipping true robotic intelligence.
             </p>
           </div>
         </section>
@@ -168,6 +168,11 @@ export default function Home() {
                   exoskeletons to reinforcement learning training data pipelines. I co-founded and scaled a tech startup to 
                   €500k in revenues, less than 12 months out of uni. To me, solving embodied AI is the most challenging 
                   and enticing problem of our time.
+                </p>
+                <p>
+                  Humanity is on track to be 100M workers short by 2030 alone due to our post-modern ageing society. 
+                  Embodied AI can fix this. And I would like my future family to live a life as beautiful and better than 
+                  what I am so grateful for living today. Extremely excited to be alive right now and make a dent!
                 </p>
               </div>
             </Card>
@@ -254,9 +259,18 @@ export default function Home() {
               <Card className="bg-gray-800 border-gray-700 p-6 h-full">
                 <div className="mb-4">
                   <h3 className="text-xl font-bold text-white mb-3">RL Projects</h3>
-                  <p className="text-gray-300 leading-relaxed mb-4">
-                    Reinforcement learning implementations including Monte Carlo Tree Search for wildfire suppression and autonomous control systems.
-                  </p>
+                    <p className="text-white leading-relaxed mb-4">
+                      This repository showcases my reinforcement learning expertise through projects like CartPole DQN, MuJoCo PPO/SAC, an Othello RL agent, and a Tesla Optimus-inspired robotic system, earning{" "}
+                      <a 
+                        href="https://roboinnovate.mirmi.tum.de/roboinnovate-hackathon-2025/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-white underline hover:text-orange-300"
+                      >
+                        2nd place with ExVo at Robo Innovate 2025
+                      </a>
+                      , Germany's largest robotics hackathon.
+                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">PyTorch</Badge>
