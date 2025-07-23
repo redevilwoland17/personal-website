@@ -236,8 +236,17 @@ export default function Home() {
               </div>
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-white mb-3">human2robot</h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Coordination and data layer for the robotic age. Training data platform using imitation learning from human hand video recordings. Won 2 hackathons and secured YC interview.
+                <p className="text-white leading-relaxed mb-4">
+                  Coordination and data layer for the robotic age. Training data platform using imitation learning from human hand video recordings.&nbsp;
+                  <a
+                  href="https://www.linkedin.com/posts/jep7_rl-imitation-learning-activity-7345208378501062657-ga36?utm_source=share&utm_medium=member_desktop&rcm=ACoAACBDePQBszetOjFm1YJUCXql69BtJb6OTaY"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white underline hover:text-orange-500"
+                  >
+                  Won 2 hackathons
+                  </a>
+                  &nbsp;and secured YC interview.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 mb-6">
