@@ -184,13 +184,11 @@ export default function Home() {
                   Computational engineer with AI and robotics expertise.
                   Co-founder who scaled a startup to €500k revenue.
                   Educated at Imperial College and Cambridge University.&nbsp;
-                  <span className="relative font-semibold">
                     Building the data pipelines for shipping{" "}
                     <span className="bg-orange-500 rounded px-1 font-bold" style={{ lineHeight: "1.5", paddingTop: "0.1em", paddingBottom: "0.1em" }}>
                       true robotic intelligence
                     </span>
                     .
-                  </span>
                 </p>
             </div>
           </div>
@@ -225,7 +223,7 @@ export default function Home() {
 
         {/* Simple Projects Section */}
         <section className="max-w-4xl mx-auto px-6 pb-16">
-          <h2 className="text-3xl font-bold text-white mb-12 text-center">Featured Projects</h2>
+          <h2 className="text-3xl font-bold text-white mb-12 text-center">Projects</h2>
           
           <div className="space-y-8">
             {/* human2robot - Featured */}
@@ -245,8 +243,9 @@ export default function Home() {
               <div className="flex flex-wrap gap-2 mb-6">
                 <Badge variant="secondary" className="bg-gray-700 text-gray-300">Python</Badge>
                 <Badge variant="secondary" className="bg-gray-700 text-gray-300">ROS</Badge>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">Imitation Learning</Badge>
                 <Badge variant="secondary" className="bg-gray-700 text-gray-300">Isaac Gym</Badge>
-                <Badge variant="secondary" className="bg-gray-700 text-gray-300">Hugging Face</Badge>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">SO-101 Manipulator</Badge>
                 <Badge variant="secondary" className="bg-gray-700 text-gray-300">Computer Vision</Badge>
               </div>
               <div className="flex gap-3">
@@ -280,9 +279,9 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 mb-6">
-                <Badge variant="secondary" className="bg-gray-700 text-gray-300">LLMs</Badge>
-                <Badge variant="secondary" className="bg-gray-700 text-gray-300">SaaS</Badge>
-                <Badge variant="secondary" className="bg-gray-700 text-gray-300">AI Automation</Badge>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">SLMs</Badge>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">Enterprise Sales</Badge>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">Leadership</Badge>
               </div>
               <div className="flex gap-3">
                 <Button
@@ -318,7 +317,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">PyTorch</Badge>
-                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">MCTS</Badge>
+                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">Reinforcement Learning</Badge>
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">OpenAI Gym</Badge>
                 </div>
                 <div className="flex gap-3">
@@ -344,6 +343,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">MCTS</Badge>
+                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">MDP</Badge>
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">Optimization</Badge>
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">Research</Badge>
                 </div>
@@ -395,7 +395,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">Electronics</Badge>
-                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">Photography</Badge>
+                  <Badge variant="secondary" className="bg-gray-700 text-gray-300">Fundraising</Badge>
                   <Badge variant="secondary" className="bg-gray-700 text-gray-300">Atmospheric Physics</Badge>
                 </div>
                 <div className="flex gap-3">
