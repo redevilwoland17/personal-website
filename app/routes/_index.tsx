@@ -185,7 +185,7 @@ export default function Home() {
                   Co-founder who scaled a startup to €500k revenue.
                   Educated at Imperial College and Cambridge University.&nbsp;
                     Building the data pipelines for shipping{" "}
-                    <span className="bg-orange-500 rounded px-1 font-bold" style={{ lineHeight: "1.5", paddingTop: "0.1em", paddingBottom: "0.1em" }}>
+                    <span className="bg-orange-400 rounded px-1 font-bold" style={{ lineHeight: "1.5", paddingTop: "0.1em", paddingBottom: "0.1em" }}>
                       true robotic intelligence
                     </span>
                     .
@@ -199,20 +199,19 @@ export default function Home() {
           <div>
             <Card className="bg-gray-800 border-gray-700 p-8">
               <h2 className="text-3xl font-bold text-white mb-6">About Me</h2>
-              <div className="space-y-4 text-gray-300 leading-relaxed">
+                            <div className="space-y-4 text-gray-300 leading-relaxed">
                 <p>
-                  I'm a German engineer and founder drawn to embodied AI, where robots learn to move and think like humans. 
-                  My work spans developing advanced robotics systems to creating innovative AI solutions that solve real-world problems. 
-                  I was educated at Imperial College and Cambridge University.
+                  I'm a German engineer and founder drawn to <strong>embodied AI</strong>, where robots learn to move and think like humans. 
+                  My work spans from <strong>creating advanced robotics systems</strong> to innovative AI solutions that solve real-world problems.
                 </p>
                 <p>
-                  With a background in mechanical engineering and computing, I've led projects ranging from biomechanical 
-                  exoskeletons to reinforcement learning training data pipelines. I co-founded and scaled a tech startup to 
-                  €500k in revenues, less than 12 months out of uni. To me, solving embodied AI is the most challenging 
-                  and enticing problem of our time.
+                  With a background in <strong>mechanical engineering and computing</strong>, I've led projects ranging from biomechanical 
+                  exoskeletons to <strong>reinforcement learning training data pipelines</strong>. I co-founded and scaled a tech startup to 
+                    {" "}<strong>€500k in revenues</strong>, less than 12 months out of uni.
                 </p>
                 <p>
-                  Humanity is on track to be 100M workers short by 2030 alone due to our post-modern ageing society. 
+                  To me, solving embodied AI is the most challenging and enticing problem of our time.
+                  Humanity is on track to be <strong>100M workers short by 2030</strong> alone due to our post-modern ageing society. 
                   Embodied AI can fix this. And I would like my future family to live a life as beautiful and better than 
                   what I am so grateful for living today. Extremely excited to be alive right now and make a dent!
                 </p>
