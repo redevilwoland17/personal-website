@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -105,6 +106,21 @@ const projects: Project[] = [
 ];
 
 export default function Home() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 20;
+      setIsScrolled(scrolled);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleDownloadCV = () => {
     // Create a link to download the CV
     const link = document.createElement('a');
@@ -115,10 +131,24 @@ export default function Home() {
     document.body.removeChild(link);
   };
 
+  const handleDownloadPresentation = () => {
+    // Create a link to download the exoskeleton presentation
+    const link = document.createElement('a');
+    link.href = '/exoskeleton-presentation.pdf';
+    link.download = 'Exoskeleton_Presentation_Jonas_Petersen.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gray-800/90 backdrop-blur border-b border-gray-700">
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out border-b ${
+        isScrolled 
+          ? 'bg-gray-900/60 backdrop-blur-2xl border-gray-600/20 shadow-xl shadow-black/10' 
+          : 'bg-gray-800/70 backdrop-blur-md border-gray-700/50'
+      }`}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
@@ -385,10 +415,11 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={handleDownloadPresentation}
                     className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                   >
-                    <Youtube className="w-4 h-4 mr-2" />
-                    Demo
+                    <Download className="w-4 h-4 mr-2" />
+                    Presentation
                   </Button>
                 </div>
               </Card>
