@@ -37,16 +37,28 @@ export default function HandTeleopProject() {
           </div>
           <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
             <iframe
-              src="/projects/hand-teleop-system/frontend/web/web_interface.html"
-              className="w-full h-[600px] border-0"
-              title="Hand Teleop System Demo"
-              allow="camera"
+              src="http://localhost:8000"
+              className="w-full h-[700px] border-0"
+              title="Hand Teleop System - Full Application"
+              allow="camera; microphone"
+              sandbox="allow-same-origin allow-scripts allow-forms"
             />
           </div>
           <p className="text-sm text-gray-600 mt-3">
-            <strong>Note:</strong> Grant camera permission for the best experience. The demo includes real-time hand tracking, 
-            robot visualization, and multiple tracking models.
+            <strong>Note:</strong> This is the full hand teleop system running as a microservice. 
+            Grant camera permission for real-time hand tracking, 3D robot visualization, and inverse kinematics.
           </p>
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">🏗️ Microservices Architecture</h4>
+            <p className="text-blue-700 text-sm">
+              This demo runs on a separate backend service deployed on Railway, demonstrating modern microservices patterns:
+            </p>
+            <ul className="text-blue-600 text-sm mt-2 space-y-1">
+              <li>• <strong>Frontend:</strong> This portfolio site (Remix on Vercel)</li>
+              <li>• <strong>Backend:</strong> Hand tracking API (Python FastAPI on Railway)</li>
+              <li>• <strong>Integration:</strong> Cross-origin iframe with secure communication</li>
+            </ul>
+          </div>
         </Card>
 
         {/* Project Overview */}
