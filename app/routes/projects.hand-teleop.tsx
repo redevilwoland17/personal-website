@@ -2,6 +2,7 @@ import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { ExternalLink, Github, Play, Zap } from "lucide-react";
+import { HandTeleopApiDemo } from "~/components/HandTeleopApiDemo";
 
 export default function HandTeleopProject() {
   return (
@@ -37,7 +38,7 @@ export default function HandTeleopProject() {
           </div>
           <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
             <iframe
-              src="http://localhost:8000"
+              src="https://hand-teleop-api.onrender.com"
               className="w-full h-[700px] border-0"
               title="Hand Teleop System - Full Application"
               allow="camera; microphone"
@@ -51,11 +52,12 @@ export default function HandTeleopProject() {
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <h4 className="font-semibold text-blue-800 mb-2">🏗️ Microservices Architecture</h4>
             <p className="text-blue-700 text-sm">
-              This demo runs on a separate backend service deployed on Railway, demonstrating modern microservices patterns:
+              This demo runs on a separate backend service deployed on Render.com, demonstrating modern microservices patterns:
             </p>
             <ul className="text-blue-600 text-sm mt-2 space-y-1">
               <li>• <strong>Frontend:</strong> This portfolio site (Remix on Vercel)</li>
-              <li>• <strong>Backend:</strong> Hand tracking API (Python FastAPI on Railway)</li>
+              <li>• <strong>Backend:</strong> Hand tracking API (Python FastAPI on Render.com)</li>
+              <li>• <strong>Live API:</strong> <a href="https://hand-teleop-api.onrender.com/docs" target="_blank" className="underline">hand-teleop-api.onrender.com</a></li>
               <li>• <strong>Integration:</strong> Cross-origin iframe with secure communication</li>
             </ul>
           </div>
@@ -158,6 +160,9 @@ export default function HandTeleopProject() {
             </a>
           </Button>
         </div>
+
+        {/* Live API Demo */}
+        <HandTeleopApiDemo />
 
         {/* Technical Details */}
         <Card className="p-6 mt-8">
