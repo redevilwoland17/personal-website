@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -12,7 +13,8 @@ import {
   FileText, 
   Youtube, 
   Camera,
-  Star
+  Star,
+  Play
 } from "lucide-react";
 import type { MetaFunction } from "@remix-run/node";
 
@@ -288,10 +290,21 @@ export default function Home() {
               </div>
               <div className="flex gap-3">
                 <Button
+                  asChild
                   variant="default"
                   size="sm"
-                  onClick={() => window.open('https://github.com/7jep7/human2robot', '_blank')}
                   className="bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Link to="/projects/hand-teleop">
+                    <Play className="w-4 h-4 mr-2" />
+                    Live Demo
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('https://github.com/7jep7/human2robot', '_blank')}
+                  className="border-gray-600 text-gray-300 hover:border-orange-500 hover:text-orange-500"
                 >
                   <Github className="w-4 h-4 mr-2" />
                   GitHub

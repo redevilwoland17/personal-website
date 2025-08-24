@@ -220,7 +220,7 @@ export default function HandTeleopProject() {
 
   // Robot Visualization Component
   const RobotVisualization = () => (
-    <Card className="p-6">
+    <Card className="bg-gray-800 border-gray-700 p-6">
       <div className="flex items-center gap-2 mb-6">
         <Monitor className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold text-white">Robot Visualization</h2>
@@ -380,7 +380,7 @@ export default function HandTeleopProject() {
 
           {/* Feature Overview Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card className="p-6 text-center">
+            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
               <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Hand className="h-6 w-6 text-primary" />
               </div>
@@ -390,7 +390,7 @@ export default function HandTeleopProject() {
               </p>
             </Card>
             
-            <Card className="p-6 text-center">
+            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
               <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Cpu className="h-6 w-6 text-primary" />
               </div>
@@ -400,7 +400,7 @@ export default function HandTeleopProject() {
               </p>
             </Card>
             
-            <Card className="p-6 text-center">
+            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
               <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Monitor className="h-6 w-6 text-primary" />
               </div>
@@ -412,7 +412,7 @@ export default function HandTeleopProject() {
           </div>
 
           {/* Embedded Demo */}
-          <Card className="mb-12 p-6">
+          <Card className="bg-gray-800 border-gray-700 mb-12 p-6">
             <div className="flex items-center gap-2 mb-6">
               <Eye className="h-5 w-5 text-primary" />
               <h2 className="text-2xl font-semibold text-white">Live Demo</h2>
@@ -457,7 +457,7 @@ export default function HandTeleopProject() {
             <RobotVisualization />
 
             {/* Camera Feed Panel */}
-            <Card className="p-6">
+            <Card className="bg-gray-800 border-gray-700 p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Camera className="h-5 w-5 text-primary" />
                 <h2 className="text-xl font-semibold text-white">Camera Feed</h2>
@@ -524,10 +524,10 @@ export default function HandTeleopProject() {
           </div>
 
           {/* Analytics Panel */}
-          <Card className="overflow-hidden">
+          <Card className="bg-gray-800 border-gray-700 overflow-hidden">
             <button
               onClick={() => setShowAnalytics(!showAnalytics)}
-              className="w-full p-6 text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
+              className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-700/50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
