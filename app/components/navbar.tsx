@@ -53,14 +53,18 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-black bg-opacity-90 dark:bg-neutral-900 dark:bg-opacity-90 backdrop-blur border-b border-neutral-800 z-50">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between text-white dark:text-neutral-100">
-        <span
-          className="font-bold text-lg tracking-tight cursor-pointer"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          J11N
-        </span>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out border-b ${
+      dark 
+        ? 'bg-gray-900/60 backdrop-blur-2xl border-gray-600/20 shadow-xl shadow-black/10' 
+        : 'bg-gray-800/70 backdrop-blur-md border-gray-700/50'
+    }`}>
+      <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center cursor-pointer"
+               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <span className="text-white font-bold text-lg">JP</span>
+          </div>
+        </div>
         <ul className="flex space-x-6 text-sm font-medium">
           {navItems.map(({ name, href }) => {
             const id = href.slice(1);
@@ -69,8 +73,8 @@ export default function Navbar() {
                 <a
                   href={href}
                   onClick={e => handleClick(e, href)}
-                  className={`hover:text-neutral-400 dark:hover:text-neutral-300 transition-colors duration-200 ${
-                    active === id ? "text-blue-400 dark:text-blue-300" : ""
+                  className={`text-gray-300 hover:text-orange-500 transition-colors duration-200 ${
+                    active === id ? "text-orange-500" : ""
                   }`}
                 >
                   {name}
@@ -81,7 +85,7 @@ export default function Navbar() {
         </ul>
         <button
           onClick={toggleDark}
-          className="ml-4 p-2 rounded-full bg-transparent hover:bg-neutral-800/40 dark:hover:bg-neutral-200/20 text-xl transition-colors"
+          className="ml-4 p-2 rounded-full bg-transparent hover:bg-gray-700/40 text-xl transition-colors text-gray-300"
           aria-label="Toggle dark mode"
         >
           {dark ? "☾" : "◑"}
