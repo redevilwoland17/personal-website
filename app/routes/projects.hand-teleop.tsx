@@ -18,35 +18,29 @@ import {
   Play,
   ArrowLeft,
   Github,
+  Hand,
   Monitor,
   Cpu,
-  Eye,
-  Hand,
   Pause,
-  RotateCcw
+  Terminal,
 } from "lucide-react";
-import type { LoaderFunction } from "@remix-run/node";
 
-// Remix loader function - required for GET requests
-export const loader: LoaderFunction = async () => {
+export const loader = async () => {
   return json({});
 };
 
 const API_BASE = "https://hand-teleop-api.onrender.com";
 
-// Robot configuration
 const ROBOTS = [
-  { id: 'ur5e', name: 'UR5e Collaborative Robot', dof: 6, description: 'Universal Robots collaborative arm' },
-  { id: 'franka', name: 'Franka Emika Panda', dof: 7, description: 'Research platform with compliant control' },
-  { id: 'kuka', name: 'KUKA LBR iiwa', dof: 7, description: 'Lightweight robot with force sensing' },
-  { id: 'so101', name: 'SO-101 Humanoid Hand', dof: 5, description: 'Dexterous robotic hand' },
-  { id: 'simulation', name: 'Simulation Mode', dof: 6, description: 'Virtual robot for testing' }
+  { id: 'ur5e', name: 'UR5e', dof: 6, description: 'Universal Robots collaborative arm for precise manipulation' },
+  { id: 'franka', name: 'Franka Emika Panda', dof: 7, description: 'Research robot with torque sensors in every joint' },
+  { id: 'kinova', name: 'Kinova Gen3', dof: 7, description: 'Lightweight carbon fiber arm for research applications' },
+  { id: 'kuka', name: 'KUKA LBR iiwa', dof: 7, description: 'Sensitive lightweight robot for human-robot collaboration' }
 ];
 
-// Hand tracking models
-const TRACKING_MODELS = [
+const HAND_MODELS = [
   { id: 'mediapipe', name: 'MediaPipe Hands', description: 'Real-time hand landmark detection' },
-  { id: 'wilor', name: 'WiLoR', description: 'Whole-body pose estimation' }
+  { id: 'wilor', name: 'WiLoR', description: 'Whole-body human mesh recovery' }
 ];
 
 interface FingertipData {
@@ -76,6 +70,7 @@ export default function HandTeleopProject() {
   const [isTracking, setIsTracking] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [apiStatus, setApiStatus] = useState('checking');
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   
   // Data state
   const [fingertipData, setFingertipData] = useState<FingertipData>({
@@ -106,6 +101,12 @@ export default function HandTeleopProject() {
     checkApiStatus();
   }, []);
 
+  // Helper function to log messages
+  const addToConsole = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setConsoleLogs(prev => [`[${timestamp}] ${message}`, ...prev].slice(0, 50)); // Keep last 50 logs
+  };
+
   const checkApiStatus = async () => {
     try {
       const response = await fetch(`${API_BASE}/health`);
@@ -122,33 +123,55 @@ export default function HandTeleopProject() {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480, facingMode: 'user' } 
+        video: { width: 640, height: 480 } 
       });
-      streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        addToConsole('Camera started successfully');
+        
+        // Set camera active immediately and start tracking after a delay
+        setIsCameraActive(true);
+        
+        // Auto-start tracking after camera is ready
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            setIsTracking(true);
+            addToConsole(`Hand tracking started with model: ${selectedModel}`);
+            processHandTracking();
+          }
+        }, 1000);
       }
-      setIsCameraActive(true);
     } catch (error) {
-      console.error("Camera access denied:", error);
-      alert("Camera access is required for hand tracking");
+      console.error('Camera error:', error);
+      addToConsole(`Camera error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert('Camera access failed. Please check permissions.');
     }
   };
 
   const stopCamera = () => {
+    // Stop tracking first
+    if (isTracking) {
+      stopTracking();
+    }
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    
     setIsCameraActive(false);
-    setIsTracking(false);
+    addToConsole('Camera stopped');
   };
 
   const connectToRobot = async () => {
     try {
+      addToConsole(`Connecting to robot: ${selectedRobot}`);
       const response = await fetch(`${API_BASE}/connect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,159 +179,228 @@ export default function HandTeleopProject() {
       });
       
       if (response.ok) {
+        const robotData = await response.json();
         setIsConnected(true);
+        addToConsole(`Robot connected successfully: ${robotData.message || 'Connected'}`);
+        
+        // Update robot state with real data
+        if (robotData.robot_state) {
+          setRobotState(robotData.robot_state);
+        }
+        
+        // Start polling robot status
+        startRobotStatusPolling();
       } else {
-        alert("Failed to connect to robot");
+        const errorData = await response.json();
+        const errorMsg = `Failed to connect to robot: ${errorData.message || 'Unknown error'}`;
+        addToConsole(errorMsg);
+        alert(errorMsg);
       }
     } catch (error) {
-      alert("Connection error");
+      console.error('Connection error:', error);
+      const errorMsg = "Connection error - check if backend is running";
+      addToConsole(errorMsg);
+      alert(errorMsg);
     }
+  };
+
+  const startRobotStatusPolling = () => {
+    const pollRobotStatus = async () => {
+      if (!isConnected) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/robot_status`);
+        if (response.ok) {
+          const robotData = await response.json();
+          setRobotState(robotData);
+        }
+      } catch (error) {
+        console.error('Robot status polling error:', error);
+      }
+    };
+    
+    // Poll every 100ms for real-time updates
+    const pollInterval = setInterval(pollRobotStatus, 100);
+    
+    // Cleanup on component unmount or disconnect
+    return () => clearInterval(pollInterval);
   };
 
   const startTracking = () => {
     if (!isCameraActive) {
-      alert("Please start camera first");
+      addToConsole("Camera not active - please start camera first");
       return;
     }
     setIsTracking(true);
-    // Start hand tracking loop
+    addToConsole(`Hand tracking started with model: ${selectedModel}`);
     processHandTracking();
   };
 
   const stopTracking = () => {
     setIsTracking(false);
+    addToConsole('Hand tracking stopped');
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
   };
 
-  const processHandTracking = () => {
-    // Simulate hand tracking data (in real implementation, this would use MediaPipe)
-    const simulatedData: FingertipData = {
-      thumb: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
-      indexPip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
-      indexTip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
-      timestamp: Date.now()
-    };
+  const processHandTracking = async () => {
+    if (!isCameraActive || !videoRef.current || !canvasRef.current) return;
     
-    setFingertipData(simulatedData);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
     
-    // Update robot state based on hand data
-    const newRobotState: RobotState = {
-      jointAngles: simulatedData.indexTip ? [
-        (simulatedData.indexTip.x - 50) * 0.02,
-        (simulatedData.indexTip.y - 50) * 0.02,
-        (simulatedData.indexTip.z - 50) * 0.02,
-        0, 0, 0
-      ] : [0, 0, 0, 0, 0, 0],
-      endEffectorPose: {
-        position: simulatedData.indexTip || { x: 0, y: 0, z: 0 },
-        orientation: { roll: 0, pitch: 0, yaw: 0 }
-      },
-      gripperState: simulatedData.thumb && simulatedData.indexTip ? 
-        (Math.abs(simulatedData.thumb.x - simulatedData.indexTip.x) < 20 ? 'closed' : 'open') : 'open',
-      inWorkspace: true,
-      confidence: 0.85 + Math.random() * 0.15
-    };
+    if (!context) return;
     
-    setRobotState(newRobotState);
+    // Set canvas size to match video
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    try {
+      // Capture frame from video
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempContext = tempCanvas.getContext('2d');
+      if (tempContext) {
+        tempContext.drawImage(video, 0, 0);
+        
+        // Convert to blob and send to API
+        tempCanvas.toBlob(async (blob) => {
+          if (!blob) return;
+          
+          const formData = new FormData();
+          formData.append('image', blob, 'frame.jpg');
+          formData.append('model', selectedModel);
+          
+          try {
+            const response = await fetch(`${API_BASE}/detect_hands`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              
+              // Update fingertip data
+              if (data.hands && data.hands.length > 0) {
+                const hand = data.hands[0];
+                const newFingertipData: FingertipData = {
+                  thumb: hand.landmarks[4] || null,
+                  indexPip: hand.landmarks[6] || null,
+                  indexTip: hand.landmarks[8] || null,
+                  timestamp: Date.now()
+                };
+                setFingertipData(newFingertipData);
+                
+                // Draw hand landmarks on canvas
+                drawHandLandmarks(context, hand.landmarks, canvas.width, canvas.height);
+                
+                // Log detection
+                addToConsole(`Hand detected: ${hand.landmarks.length} landmarks, confidence: ${(data.confidence || 0).toFixed(2)}`);
+                
+                // Send to robot control API
+                if (isConnected) {
+                  updateRobotFromHandData(newFingertipData);
+                }
+              } else {
+                // Clear landmarks if no hands detected
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                setFingertipData({
+                  thumb: null,
+                  indexPip: null,
+                  indexTip: null,
+                  timestamp: Date.now()
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Hand detection API error:', error);
+            addToConsole(`API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            // Fall back to simulated data
+            const simulatedData: FingertipData = {
+              thumb: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
+              indexPip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
+              indexTip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
+              timestamp: Date.now()
+            };
+            setFingertipData(simulatedData);
+          }
+        }, 'image/jpeg', 0.8);
+      }
+    } catch (error) {
+      console.error('Frame capture error:', error);
+    }
     
     if (isTracking) {
       animationRef.current = requestAnimationFrame(processHandTracking);
     }
   };
 
-  // Robot Visualization Component
-  const RobotVisualization = () => (
-    <Card className="bg-gray-800 border-gray-700 p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Monitor className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold text-white">Robot Visualization</h2>
-        <Badge variant={isConnected ? "default" : "secondary"} className="ml-auto">
-          {isConnected ? "Connected" : "Disconnected"}
-        </Badge>
-      </div>
+  const drawHandLandmarks = (context: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
+    context.clearRect(0, 0, width, height);
+    
+    // Draw landmarks
+    landmarks.forEach((landmark, index) => {
+      const x = landmark.x * width;
+      const y = landmark.y * height;
       
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2 text-white">Robot Embodiment</label>
-          <select 
-            value={selectedRobot}
-            onChange={(e) => setSelectedRobot(e.target.value)}
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white"
-          >
-            {ROBOTS.map(robot => (
-              <option key={robot.id} value={robot.id} className="bg-gray-800 text-white">
-                {robot.name} ({robot.dof} DOF)
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-400 mt-1">
-            {ROBOTS.find(r => r.id === selectedRobot)?.description}
-          </p>
-        </div>
+      // Draw landmark point
+      context.beginPath();
+      context.arc(x, y, 5, 0, 2 * Math.PI);
+      context.fillStyle = index === 4 || index === 8 ? '#ff6b35' : '#00ff00'; // Orange for thumb/index tip
+      context.fill();
+      
+      // Draw landmark number
+      context.fillStyle = '#ffffff';
+      context.font = '10px Arial';
+      context.fillText(index.toString(), x + 8, y - 8);
+    });
+    
+    // Draw connections between landmarks (simplified)
+    const connections = [
+      [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
+      [0, 5], [5, 6], [6, 7], [7, 8], // Index
+      [0, 9], [9, 10], [10, 11], [11, 12], // Middle
+      [0, 13], [13, 14], [14, 15], [15, 16], // Ring
+      [0, 17], [17, 18], [18, 19], [19, 20]  // Pinky
+    ];
+    
+    context.strokeStyle = '#00ff00';
+    context.lineWidth = 2;
+    connections.forEach(([start, end]) => {
+      if (landmarks[start] && landmarks[end]) {
+        context.beginPath();
+        context.moveTo(landmarks[start].x * width, landmarks[start].y * height);
+        context.lineTo(landmarks[end].x * width, landmarks[end].y * height);
+        context.stroke();
+      }
+    });
+  };
 
-        {/* 3D Robot Visualization Area */}
-        <div className="aspect-square bg-muted rounded-lg border-2 border-dashed border-border relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            {isConnected ? (
-              <div className="text-center text-white">
-                <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Monitor className="h-12 w-12 text-primary" />
-                </div>
-                <p className="text-sm font-medium text-white">3D Robot Model</p>
-                <p className="text-xs text-gray-400">
-                  {ROBOTS.find(r => r.id === selectedRobot)?.name}
-                </p>
-                {isTracking && (
-                  <div className="mt-2">
-                    <Badge className="bg-green-500 animate-pulse">
-                      <Activity className="h-3 w-3 mr-1" />
-                      Tracking Active
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center text-gray-400">
-                <Monitor className="h-16 w-16 mx-auto mb-2 opacity-30" />
-                <p className="text-gray-400">Connect robot to view 3D model</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            onClick={connectToRobot}
-            disabled={isConnected}
-            variant={isConnected ? "outline" : "default"}
-          >
-            <Power className="h-4 w-4 mr-2" />
-            {isConnected ? "Connected" : "Connect"}
-          </Button>
-          
-          <Button 
-            onClick={isTracking ? stopTracking : startTracking}
-            disabled={!isConnected || !isCameraActive}
-            variant={isTracking ? "outline" : "default"}
-          >
-            {isTracking ? (
-              <>
-                <Pause className="h-4 w-4 mr-2" />
-                Stop Control
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Start Control
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
+  const updateRobotFromHandData = async (handData: FingertipData) => {
+    if (!handData.indexTip) return;
+    
+    try {
+      const response = await fetch(`${API_BASE}/control_robot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          robot_type: selectedRobot,
+          hand_data: handData,
+          model: selectedModel
+        })
+      });
+      
+      if (response.ok) {
+        const robotData = await response.json();
+        setRobotState(robotData);
+      }
+    } catch (error) {
+      console.error('Robot control API error:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -332,354 +424,321 @@ export default function HandTeleopProject() {
       </header>
 
       {/* Main Content */}
-      <div className="pt-16">
-        <div className="container mx-auto px-4 max-w-6xl py-8">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-gradient">Hand Teleop System</span>
-            </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-6">
-              Control robots with natural hand movements using real-time computer vision and inverse kinematics
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              <Badge variant="secondary">MediaPipe</Badge>
-              <Badge variant="secondary">WiLoR</Badge>
-              <Badge variant="secondary">FastAPI</Badge>
-              <Badge variant="secondary">Real-time</Badge>
-              <Badge variant="secondary">Computer Vision</Badge>
-              <Badge variant="secondary">Inverse Kinematics</Badge>
-            </div>
-            
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button 
-                variant="default"
-                onClick={() => window.open(`${API_BASE}`, '_blank')}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Try Full Demo
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => window.open('https://github.com/7jep7/hand-teleop-system', '_blank')}
-              >
-                <Github className="h-4 w-4 mr-2" />
-                View Code
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                API Docs
-              </Button>
-            </div>
-          </div>
-
-          {/* Feature Overview Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Hand className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Hand Tracking</h3>
-              <p className="text-sm text-gray-400">
-                Real-time hand pose estimation using MediaPipe with 21 keypoint detection
-              </p>
-            </Card>
-            
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Cpu className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Inverse Kinematics</h3>
-              <p className="text-sm text-gray-400">
-                Custom IK solver for robot arm control with collision avoidance
-              </p>
-            </Card>
-            
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Monitor className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">3D Visualization</h3>
-              <p className="text-sm text-gray-400">
-                Real-time 3D robot visualization with Three.js and physics simulation
-              </p>
-            </Card>
-          </div>
-
-          {/* Embedded Demo */}
-          <Card className="bg-gray-800 border-gray-700 mb-12 p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Eye className="h-5 w-5 text-primary" />
-              <h2 className="text-2xl font-semibold text-white">Live Demo</h2>
-              <Badge className="ml-auto">
-                <Activity className="h-3 w-3 mr-1" />
-                Interactive
-              </Badge>
-            </div>
-            <div className="bg-muted rounded-lg overflow-hidden border-2 border-border">
-              <iframe
-                src={API_BASE}
-                className="w-full h-[600px] border-0"
-                title="Hand Teleop System - Full Application"
-                allow="camera; microphone"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-              />
-            </div>
-            <p className="text-sm text-gray-400 mt-4">
-              <strong>💡 Tip:</strong> Grant camera permission for real-time hand tracking. 
-              The demo includes 3D robot visualization, inverse kinematics, and multiple robot embodiments.
-            </p>
-          </Card>
+      <div className="pt-20 px-6 max-w-6xl mx-auto">
+        
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">
-            <span className="text-gradient">Hand Teleop</span>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4 text-white">
+            Hand Teleop System
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Control robots with natural hand movements
           </p>
-          <div className="flex flex-wrap justify-center gap-2 mt-4">
-            <Badge variant="secondary">Real-time</Badge>
-            <Badge variant="secondary">MediaPipe</Badge>
-            <Badge variant="secondary">FastAPI</Badge>
-            <Badge variant="secondary">Computer Vision</Badge>
-          </div>
         </div>
 
-          {/* Main Control Interface */}
-          <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            {/* Robot Visualization */}
-            <RobotVisualization />
-
-            {/* Camera Feed Panel */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Camera className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold text-white">Camera Feed</h2>
-                <Badge variant={isCameraActive ? "default" : "secondary"} className="ml-auto">
-                  {isCameraActive ? "Active" : "Inactive"}
-                </Badge>
+        {/* Main Interface */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          {/* Robot Visualization */}
+          <Card className="bg-gray-800 border-gray-700 p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Monitor className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold text-white">Robot</h2>
+              <Badge variant={isConnected ? "default" : "secondary"} className="ml-auto">
+                {isConnected ? "Connected" : "Disconnected"}
+              </Badge>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-white">Robot Embodiment</label>
+                <select 
+                  value={selectedRobot}
+                  onChange={(e) => setSelectedRobot(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                >
+                  {ROBOTS.map(robot => (
+                    <option key={robot.id} value={robot.id} className="bg-gray-800 text-white">
+                      {robot.name} ({robot.dof} DOF)
+                    </option>
+                  ))}
+                </select>
               </div>
-              
-              <div className="space-y-4">
-                <div className="aspect-video bg-muted rounded-lg overflow-hidden relative border">
-                  {isCameraActive ? (
-                    <>
-                      <video 
-                        ref={videoRef}
-                        autoPlay 
-                        muted 
-                        className="w-full h-full object-cover"
-                      />
-                      <canvas 
-                        ref={canvasRef}
-                        className="absolute inset-0 w-full h-full"
-                        style={{ pointerEvents: 'none' }}
-                      />
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <div className="text-center">
-                        <CameraOff className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p className="text-gray-400">Camera feed will appear here</p>
-                        <p className="text-sm text-gray-400">Grant camera access to start</p>
+
+              {/* 3D Robot Visualization Area */}
+              <div className="aspect-square bg-gray-900 rounded-lg border-2 border-dashed border-gray-600 relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {isConnected ? (
+                    <div className="text-center text-white">
+                      <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Monitor className="h-12 w-12 text-primary" />
                       </div>
+                      <p className="text-sm font-medium text-white">3D Robot Model</p>
+                      <p className="text-xs text-gray-400">
+                        {ROBOTS.find(r => r.id === selectedRobot)?.name}
+                      </p>
+                      {isTracking && (
+                        <div className="mt-2">
+                          <Badge className="bg-green-500 animate-pulse">
+                            <Activity className="h-3 w-3 mr-1" />
+                            Tracking Active
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  {isTracking && (
-                    <div className="absolute top-2 right-2">
-                      <Badge className="bg-red-500 animate-pulse">
-                        <Activity className="h-3 w-3 mr-1" />
-                        TRACKING
-                      </Badge>
+                  ) : (
+                    <div className="text-center text-gray-400">
+                      <Monitor className="h-16 w-16 mx-auto mb-2 opacity-30" />
+                      <p className="text-gray-400">Connect robot to view 3D model</p>
                     </div>
                   )}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 gap-2">
                 <Button 
-                  onClick={isCameraActive ? stopCamera : startCamera}
-                  variant={isCameraActive ? "outline" : "default"}
-                  className="w-full"
+                  onClick={connectToRobot}
+                  disabled={isConnected}
+                  variant={isConnected ? "outline" : "default"}
                 >
-                  {isCameraActive ? (
+                  <Power className="h-4 w-4 mr-2" />
+                  {isConnected ? "Connected" : "Connect"}
+                </Button>
+                
+                <Button 
+                  onClick={isTracking ? stopTracking : startTracking}
+                  disabled={!isConnected || !isCameraActive}
+                  variant={isTracking ? "outline" : "default"}
+                >
+                  {isTracking ? (
                     <>
-                      <CameraOff className="h-4 w-4 mr-2" />
-                      Stop Camera
+                      <Pause className="h-4 w-4 mr-2" />
+                      Stop Control
                     </>
                   ) : (
                     <>
-                      <Camera className="h-4 w-4 mr-2" />
-                      Start Camera
+                      <Play className="h-4 w-4 mr-2" />
+                      Start Control
                     </>
                   )}
                 </Button>
               </div>
-            </Card>
-          </div>
+            </div>
+          </Card>
 
-          {/* Analytics Panel */}
-          <Card className="bg-gray-800 border-gray-700 overflow-hidden">
-            <button
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-700/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold text-white">Analytics & Debug Info</h2>
+          {/* Camera Feed Panel */}
+          <Card className="bg-gray-800 border-gray-700 p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Camera className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold text-white">Camera Feed</h2>
+              <Badge variant={isCameraActive ? "default" : "secondary"} className="ml-auto">
+                {isCameraActive ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                  onClick={startCamera}
+                  disabled={isCameraActive}
+                  size="sm"
+                  className="flex-1"
+                >
+                  {isCameraActive ? (
+                    <>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Camera Active
+                    </>
+                  ) : (
+                    <>
+                      <CameraOff className="h-4 w-4 mr-2" />
+                      Start Camera
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={stopCamera}
+                  disabled={!isCameraActive}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  Stop
+                </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  {isTracking ? "Live" : "Stopped"}
-                </Badge>
-                {showAnalytics ? (
-                  <ChevronUp className="h-5 w-5" />
-                ) : (
-                  <ChevronDown className="h-5 w-5" />
+              
+              <div className="bg-gray-900 rounded-lg overflow-hidden aspect-video relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                  style={{ display: isCameraActive ? 'block' : 'none' }}
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                  style={{ display: isCameraActive ? 'block' : 'none' }}
+                />
+                {!isCameraActive && (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                      <CameraOff className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-gray-400">Camera feed will appear here</p>
+                      <p className="text-sm text-gray-400">Grant camera access to start</p>
+                    </div>
+                  </div>
                 )}
               </div>
-            </button>
-            
-            {showAnalytics && (
-              <div className="p-6 pt-0 border-t border-border">
-                <div className="grid gap-6">
-                  {/* Model Selection */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-white">Hand Tracking Model</label>
-                    <select 
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                      className="w-full p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
-                    >
-                      {TRACKING_MODELS.map(model => (
-                        <option key={model.id} value={model.id} className="bg-gray-800 text-white">
-                          {model.name} - {model.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            </div>
+          </Card>
+        </div>
 
-                  {/* Data Grid */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Hand Tracking Data */}
-                    <div className="bg-gray-800/50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
-                        <Hand className="h-4 w-4" />
-                        Hand Tracking
-                      </h3>
-                      <div className="text-xs font-mono text-gray-300 space-y-1">
-                        {fingertipData.thumb ? (
-                          <>
-                            <div className="text-gray-300">Thumb: ({fingertipData.thumb.x.toFixed(1)}, {fingertipData.thumb.y.toFixed(1)}, {fingertipData.thumb.z.toFixed(1)})</div>
-                            <div className="text-gray-300">Index: ({fingertipData.indexTip?.x.toFixed(1)}, {fingertipData.indexTip?.y.toFixed(1)}, {fingertipData.indexTip?.z.toFixed(1)})</div>
-                            <div className="text-gray-300">Updated: {new Date(fingertipData.timestamp).toLocaleTimeString()}</div>
-                          </>
-                        ) : (
-                          <div className="text-gray-300">No hand detected</div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Robot Joint Positions */}
-                    <div className="bg-gray-800/50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
-                        <Settings className="h-4 w-4" />
-                        Robot Joints
-                      </h3>
-                      <div className="text-xs font-mono text-gray-300 space-y-1">
-                        {robotState.jointAngles.map((angle, i) => (
-                          <div key={i} className="text-gray-300">J{i + 1}: {angle.toFixed(3)} rad</div>
-                        ))}
-                        <div className="mt-2 pt-2 border-t border-gray-600 text-gray-300">
-                          Gripper: {robotState.gripperState}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* API Status */}
-                    <div className="bg-gray-800/50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
-                        <Zap className="h-4 w-4" />
-                        API Status
-                      </h3>
-                      <div className={`text-sm font-medium mb-2 ${
-                        apiStatus === "connected" ? "text-green-400" : 
-                        apiStatus === "error" ? "text-red-400" : "text-yellow-400"
-                      }`}>
-                        {apiStatus === "connected" ? "✅ Connected" :
-                         apiStatus === "error" ? "❌ Error" : "⏳ Checking..."}
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
-                        className="w-full"
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        API Docs
-                      </Button>
-                    </div>
-                    
-                    {/* Performance Info */}
-                    <div className="bg-gray-800/50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
-                        <Monitor className="h-4 w-4" />
-                        Performance
-                      </h3>
-                      <div className="text-xs text-gray-300 space-y-1">
-                        <div className="text-gray-300">Model: {selectedModel}</div>
-                        <div className="text-gray-300">Confidence: {(robotState.confidence * 100).toFixed(1)}%</div>
-                        <div className="text-gray-300">Workspace: {robotState.inWorkspace ? "✅ Safe" : "⚠️ Outside"}</div>
-                        <div className="text-gray-300">Latency: ~{Math.round(Math.random() * 50 + 10)}ms</div>
-                      </div>
-                    </div>
-                  </div>
+        {/* Analytics Panel */}
+        <Card className="bg-gray-800 border-gray-700 overflow-hidden">
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold text-white">Analytics & Debug Info</h2>
+            </div>
+            {showAnalytics ? (
+              <ChevronUp className="h-5 w-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-400" />
+            )}
+          </button>
 
-                  {/* End Effector Position */}
-                  <div className="bg-gray-800/50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2 text-white">End Effector Pose</h3>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-mono">
-                      <div>
-                        <div className="font-medium text-sm mb-1 text-white">Position (mm)</div>
-                        <div className="text-gray-300">X: {robotState.endEffectorPose.position.x.toFixed(2)}</div>
-                        <div className="text-gray-300">Y: {robotState.endEffectorPose.position.y.toFixed(2)}</div>
-                        <div className="text-gray-300">Z: {robotState.endEffectorPose.position.z.toFixed(2)}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm mb-1 text-white">Orientation (deg)</div>
-                        <div className="text-gray-300">Roll: {robotState.endEffectorPose.orientation.roll.toFixed(2)}</div>
-                        <div className="text-gray-300">Pitch: {robotState.endEffectorPose.orientation.pitch.toFixed(2)}</div>
-                        <div className="text-gray-300">Yaw: {robotState.endEffectorPose.orientation.yaw.toFixed(2)}</div>
-                      </div>
-                    </div>
+          {showAnalytics && (
+            <div className="px-6 pb-6 border-t border-gray-700">
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                {/* Model Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-white">Hand Tracking Model</label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full p-2 bg-gray-800 border border-gray-600 rounded-lg text-white"
+                  >
+                    {HAND_MODELS.map(model => (
+                      <option key={model.id} value={model.id} className="bg-gray-800 text-white">
+                        {model.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Fingertip Data */}
+                <div>
+                  <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
+                    <Hand className="h-4 w-4" />
+                    Hand Tracking
+                  </h3>
+                  <div className="text-xs font-mono text-gray-300 space-y-1">
+                    {fingertipData.thumb && fingertipData.indexTip ? (
+                      <>
+                        <div className="text-gray-300">Thumb: ({fingertipData.thumb.x.toFixed(1)}, {fingertipData.thumb.y.toFixed(1)}, {fingertipData.thumb.z.toFixed(1)})</div>
+                        <div className="text-gray-300">Index: ({fingertipData.indexTip?.x.toFixed(1)}, {fingertipData.indexTip?.y.toFixed(1)}, {fingertipData.indexTip?.z.toFixed(1)})</div>
+                        <div className="text-gray-300">Updated: {new Date(fingertipData.timestamp).toLocaleTimeString()}</div>
+                      </>
+                    ) : (
+                      <div className="text-gray-300">No hand detected</div>
+                    )}
                   </div>
                 </div>
+
+                {/* Robot Joint Positions */}
+                <div>
+                  <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
+                    <Settings className="h-4 w-4" />
+                    Robot Joints
+                  </h3>
+                  <div className="text-xs font-mono text-gray-300 space-y-1">
+                    {robotState.jointAngles.map((angle, i) => (
+                      <div key={i} className="text-gray-300">J{i + 1}: {angle.toFixed(3)} rad</div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* API Status */}
+                <div>
+                  <h3 className="font-medium mb-2 flex items-center gap-2 text-white">
+                    <Zap className="h-4 w-4" />
+                    API Status
+                  </h3>
+                  <div className={`text-sm font-medium mb-2 ${
+                    apiStatus === "connected" ? "text-green-400" : 
+                    apiStatus === "error" ? "text-red-400" : "text-yellow-400"
+                  }`}>
+                    {apiStatus === "connected" ? "✅ Connected" :
+                     apiStatus === "error" ? "❌ Error" : "⏳ Checking..."}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
+                    className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    API Docs
+                  </Button>
+                </div>
               </div>
-            )}
-          </Card>        {/* Quick Links */}
+
+              {/* Output Console */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium flex items-center gap-2 text-white">
+                    <Terminal className="h-4 w-4" />
+                    Output Console
+                  </h3>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setConsoleLogs([])}
+                    className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <div className="bg-gray-900 border border-gray-600 rounded-lg p-3 h-32 overflow-y-auto">
+                  {consoleLogs.length === 0 ? (
+                    <div className="text-gray-400 text-xs">Console output will appear here...</div>
+                  ) : (
+                    <div className="text-xs font-mono space-y-1">
+                      {consoleLogs.map((log, index) => (
+                        <div key={index} className="text-gray-300">{log}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Quick Links */}
         <div className="mt-8 text-center">
-          <div className="flex justify-center gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              API Documentation
-            </Button>
+          <div className="flex flex-wrap justify-center gap-4">
             <Button 
               variant="outline"
               onClick={() => window.open(`${API_BASE}`, '_blank')}
+              className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
-              Full App
+              Full Demo
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => window.open('https://github.com/7jep7/human2robot', '_blank')}
+              className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
+            >
+              <Github className="h-4 w-4 mr-2" />
+              GitHub
             </Button>
           </div>
-        </div>
         </div>
       </div>
     </div>
