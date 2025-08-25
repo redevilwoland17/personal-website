@@ -29,7 +29,7 @@ export const loader = async () => {
   return json({});
 };
 
-const API_BASE = "https://hand-teleop-api.onrender.com";
+const API_BASE = 'https://hand-teleop-api.onrender.com/api';
 
 const ROBOTS = [
   { id: 'ur5e', name: 'UR5e', dof: 6, description: 'Universal Robots collaborative arm for precise manipulation' },
@@ -112,11 +112,14 @@ export default function HandTeleopProject() {
       const response = await fetch(`${API_BASE}/health`);
       if (response.ok) {
         setApiStatus('connected');
+        addToConsole('Backend API connected successfully');
       } else {
         setApiStatus('error');
+        addToConsole('Backend API returned error status');
       }
     } catch (error) {
       setApiStatus('error');
+      addToConsole('Backend API connection failed');
     }
   };
 
@@ -172,27 +175,27 @@ export default function HandTeleopProject() {
   const connectToRobot = async () => {
     try {
       addToConsole(`Connecting to robot: ${selectedRobot}`);
-      const response = await fetch(`${API_BASE}/connect`, {
+      
+      // First configure the robot type
+      const configResponse = await fetch(`${API_BASE}/config/robot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ robot_type: selectedRobot })
+        body: JSON.stringify({ 
+          robot_type: selectedRobot,
+          end_effector: "gripper"
+        })
       });
       
-      if (response.ok) {
-        const robotData = await response.json();
+      if (configResponse.ok) {
+        const configData = await configResponse.json();
         setIsConnected(true);
-        addToConsole(`Robot connected successfully: ${robotData.message || 'Connected'}`);
+        addToConsole(`Robot configured successfully: ${configData.message || 'Connected'}`);
         
-        // Update robot state with real data
-        if (robotData.robot_state) {
-          setRobotState(robotData.robot_state);
-        }
-        
-        // Start polling robot status
+        // Start polling robot status from tracking endpoint
         startRobotStatusPolling();
       } else {
-        const errorData = await response.json();
-        const errorMsg = `Failed to connect to robot: ${errorData.message || 'Unknown error'}`;
+        const errorData = await configResponse.json();
+        const errorMsg = `Failed to configure robot: ${errorData.message || 'Unknown error'}`;
         addToConsole(errorMsg);
         alert(errorMsg);
       }
@@ -209,10 +212,30 @@ export default function HandTeleopProject() {
       if (!isConnected) return;
       
       try {
-        const response = await fetch(`${API_BASE}/robot_status`);
+        // Use the tracking endpoint to get robot status
+        const response = await fetch(`${API_BASE}/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: '', // Empty for status polling
+            robot_type: selectedRobot
+          })
+        });
+        
         if (response.ok) {
-          const robotData = await response.json();
-          setRobotState(robotData);
+          const data = await response.json();
+          if (data.robot_control) {
+            setRobotState({
+              jointAngles: data.robot_control.joint_angles || [0, 0, 0, 0, 0, 0],
+              endEffectorPose: data.robot_control.end_effector_pose || {
+                position: { x: 0, y: 0, z: 0 },
+                orientation: { roll: 0, pitch: 0, yaw: 0 }
+              },
+              gripperState: data.robot_control.gripper_state || 'open',
+              inWorkspace: data.robot_control.in_workspace || false,
+              confidence: data.robot_control.confidence || 0
+            });
+          }
         }
       } catch (error) {
         console.error('Robot status polling error:', error);
@@ -275,57 +298,79 @@ export default function HandTeleopProject() {
           formData.append('model', selectedModel);
           
           try {
-            const response = await fetch(`${API_BASE}/detect_hands`, {
+            const response = await fetch(`${API_BASE}/track`, {
               method: 'POST',
-              body: formData
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image: tempCanvas.toDataURL('image/jpeg', 0.8),
+                robot_type: selectedRobot,
+                model: selectedModel
+              })
             });
             
             if (response.ok) {
               const data = await response.json();
               
-              // Update fingertip data
-              if (data.hands && data.hands.length > 0) {
-                const hand = data.hands[0];
+              // Update fingertip data from API response
+              if (data.fingertips) {
                 const newFingertipData: FingertipData = {
-                  thumb: hand.landmarks[4] || null,
-                  indexPip: hand.landmarks[6] || null,
-                  indexTip: hand.landmarks[8] || null,
+                  thumb: data.fingertips.thumb || null,
+                  indexPip: data.fingertips.index_pip || null,
+                  indexTip: data.fingertips.index_tip || null,
                   timestamp: Date.now()
                 };
                 setFingertipData(newFingertipData);
                 
-                // Draw hand landmarks on canvas
-                drawHandLandmarks(context, hand.landmarks, canvas.width, canvas.height);
-                
-                // Log detection
-                addToConsole(`Hand detected: ${hand.landmarks.length} landmarks, confidence: ${(data.confidence || 0).toFixed(2)}`);
-                
-                // Send to robot control API
-                if (isConnected) {
-                  updateRobotFromHandData(newFingertipData);
+                // Draw hand landmarks if detected
+                if (data.hand_detected) {
+                  // Convert fingertip data to landmarks for drawing
+                  const landmarks = [];
+                  if (data.fingertips.thumb) landmarks.push(data.fingertips.thumb);
+                  if (data.fingertips.index_pip) landmarks.push(data.fingertips.index_pip);
+                  if (data.fingertips.index_tip) landmarks.push(data.fingertips.index_tip);
+                  
+                  drawHandLandmarks(context, landmarks, canvas.width, canvas.height);
+                  addToConsole(`Hand detected: ${landmarks.length} fingertips, confidence: ${data.robot_control?.confidence?.toFixed(2) || 0}`);
+                } else {
+                  // Clear canvas if no hand detected
+                  context.clearRect(0, 0, canvas.width, canvas.height);
                 }
-              } else {
-                // Clear landmarks if no hands detected
-                context.clearRect(0, 0, canvas.width, canvas.height);
-                setFingertipData({
-                  thumb: null,
-                  indexPip: null,
-                  indexTip: null,
-                  timestamp: Date.now()
-                });
+                
+                // Update robot state with real data from API
+                if (isConnected && data.robot_control) {
+                  setRobotState({
+                    jointAngles: data.robot_control.joint_angles || [0, 0, 0, 0, 0, 0],
+                    endEffectorPose: data.robot_control.end_effector_pose || {
+                      position: { x: 0, y: 0, z: 0 },
+                      orientation: { roll: 0, pitch: 0, yaw: 0 }
+                    },
+                    gripperState: data.robot_control.gripper_state || 'open',
+                    inWorkspace: data.robot_control.in_workspace || false,
+                    confidence: data.robot_control.confidence || 0
+                  });
+                }
               }
+            } else {
+              // Clear fingertip data if no response
+              setFingertipData({
+                thumb: null,
+                indexPip: null,
+                indexTip: null,
+                timestamp: Date.now()
+              });
+              context.clearRect(0, 0, canvas.width, canvas.height);
             }
           } catch (error) {
             console.error('Hand detection API error:', error);
             addToConsole(`API Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            // Fall back to simulated data
-            const simulatedData: FingertipData = {
-              thumb: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
-              indexPip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
-              indexTip: { x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 },
+            // Clear canvas on error
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            setFingertipData({
+              thumb: null,
+              indexPip: null,
+              indexTip: null,
               timestamp: Date.now()
-            };
-            setFingertipData(simulatedData);
+            });
           }
         }, 'image/jpeg', 0.8);
       }
@@ -468,22 +513,76 @@ export default function HandTeleopProject() {
               <div className="aspect-square bg-gray-900 rounded-lg border-2 border-dashed border-gray-600 relative overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   {isConnected ? (
-                    <div className="text-center text-white">
-                      <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Monitor className="h-12 w-12 text-primary" />
-                      </div>
-                      <p className="text-sm font-medium text-white">3D Robot Model</p>
-                      <p className="text-xs text-gray-400">
-                        {ROBOTS.find(r => r.id === selectedRobot)?.name}
-                      </p>
-                      {isTracking && (
-                        <div className="mt-2">
-                          <Badge className="bg-green-500 animate-pulse">
-                            <Activity className="h-3 w-3 mr-1" />
-                            Tracking Active
-                          </Badge>
+                    <div className="text-center text-white w-full h-full p-4">
+                      {/* Robot Base */}
+                      <div className="relative w-full h-full flex flex-col items-center justify-end">
+                        <div className="text-xs text-gray-400 mb-2">
+                          {ROBOTS.find(r => r.id === selectedRobot)?.name}
                         </div>
-                      )}
+                        
+                        {/* Robot Arm Visualization */}
+                        <div className="relative w-32 h-32 mb-4">
+                          {/* Base */}
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-gray-600 rounded"></div>
+                          
+                          {/* Joint 1 - Base rotation */}
+                          <div 
+                            className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-2 h-8 bg-orange-500 rounded origin-bottom"
+                            style={{ 
+                              transform: `translateX(-50%) rotate(${robotState.jointAngles[0] || 0}deg)`,
+                              transformOrigin: 'bottom center'
+                            }}
+                          >
+                            {/* Joint 2 - Shoulder */}
+                            <div 
+                              className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-6 h-2 bg-orange-400 rounded origin-left"
+                              style={{ 
+                                transform: `translateX(-50%) rotate(${robotState.jointAngles[1] || 0}deg)`,
+                                transformOrigin: 'left center'
+                              }}
+                            >
+                              {/* Joint 3 - Elbow */}
+                              <div 
+                                className="absolute top-1/2 right-0 w-4 h-1 bg-orange-300 rounded origin-left"
+                                style={{ 
+                                  transform: `translateY(-50%) rotate(${robotState.jointAngles[2] || 0}deg)`,
+                                  transformOrigin: 'left center'
+                                }}
+                              >
+                                {/* End Effector */}
+                                <div 
+                                  className={`absolute top-1/2 right-0 w-2 h-2 rounded-full ${
+                                    robotState.gripperState === 'open' ? 'bg-green-400' : 'bg-red-400'
+                                  }`}
+                                  style={{ transform: 'translateY(-50%)' }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Robot Status */}
+                        <div className="space-y-1 text-xs">
+                          <div className={`font-medium ${robotState.inWorkspace ? 'text-green-400' : 'text-yellow-400'}`}>
+                            {robotState.inWorkspace ? '✅ In Workspace' : '⚠️ Out of Workspace'}
+                          </div>
+                          <div className="text-gray-300">
+                            Confidence: {(robotState.confidence * 100).toFixed(0)}%
+                          </div>
+                          <div className="text-gray-300">
+                            Gripper: {robotState.gripperState === 'open' ? 'Open' : 'Closed'}
+                          </div>
+                        </div>
+                        
+                        {isTracking && (
+                          <div className="mt-2">
+                            <Badge className="bg-green-500 animate-pulse">
+                              <Activity className="h-3 w-3 mr-1" />
+                              Tracking Active
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center text-gray-400">
@@ -678,7 +777,7 @@ export default function HandTeleopProject() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
+                    onClick={() => window.open('https://hand-teleop-api.onrender.com/docs', '_blank')}
                     className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
@@ -724,7 +823,7 @@ export default function HandTeleopProject() {
           <div className="flex flex-wrap justify-center gap-4">
             <Button 
               variant="outline"
-              onClick={() => window.open(`${API_BASE}`, '_blank')}
+              onClick={() => window.open('https://hand-teleop-api.onrender.com/demo', '_blank')}
               className="text-gray-300 border-gray-600 hover:border-orange-500 hover:text-orange-500"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
